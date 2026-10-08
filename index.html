@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — AI Agent Operating Environment</title>
+<meta name="description" content="Open-source AI Agent Operating Environment. Sandboxed agents, gated tools, and a replayable event log for every action. Zero runtime dependencies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ink: { 950:'#0A0A0B', 900:'#111113', 850:'#18181B', 800:'#1F1F23', 700:'#2E2E33', 600:'#3F3F46' },
+        line: { DEFAULT:'#27272A', soft:'#1E1E21' },
+        fog: { DEFAULT:'#A1A1AA', dim:'#71717A' },
+        paper: { DEFAULT:'#FAFAFA', dim:'#D4D4D8' }
+      },
+      fontFamily: {
+        sans: ['"IBM Plex Sans"','system-ui','sans-serif'],
+        mono: ['"JetBrains Mono"','ui-monospace','monospace']
+      }
+    }
+  }
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  :focus-visible { outline: 2px solid #FAFAFA; outline-offset: 2px; border-radius: 2px; }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 100%);
+  }
+</style>
+</head>
+<body class="bg-ink-950 text-paper font-sans antialiased">
+
+<!-- NAV -->
+<header class="sticky top-0 z-50 border-b border-line-soft bg-ink-950/85 backdrop-blur">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Main">
+    <a href="#" class="flex items-center gap-2.5 font-mono text-sm font-semibold tracking-tight text-paper">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+      </svg>
+      NEXUS
+    </a>
+    <div class="hidden items-center gap-8 text-sm text-fog md:flex">
+      <a href="#features" class="transition-colors hover:text-paper">Features</a>
+      <a href="#install" class="transition-colors hover:text-paper">Install</a>
+      <a href="#events" class="transition-colors hover:text-paper">Event log</a>
+    </div>
+    <a href="https://github.com/asynx6/nexus-cli" target="_blank" rel="noopener"
+       class="inline-flex items-center gap-2 rounded-md border border-line bg-ink-850 px-4 py-2 text-sm font-medium text-paper transition-colors duration-200 hover:border-line hover:bg-ink-800 cursor-pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="grid-bg absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl px-6 pb-24 pt-20 md:pb-32 md:pt-28">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-ink-900 px-4 py-1.5 font-mono text-xs text-fog">
+          <span class="inline-block h-1.5 w-1.5 rounded-full bg-paper" aria-hidden="true"></span>
+          v0.4.2 · MIT licensed · zero dependencies
+        </p>
+        <h1 class="text-balance text-4xl font-bold leading-tight tracking-tight text-paper md:text-6xl">
+          The operating environment<br class="hidden md:block"> for AI agents that<br class="hidden md:block">
+          <span class="font-mono text-paper-dim">leave a trail</span>
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-fog md:text-lg">
+          NEXUS runs AI agents in isolated sandboxes with gated tools — and logs every action
+          as a replayable event. When an agent breaks something, you can see exactly what it did,
+          step by step, and replay it.
+        </p>
+        <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a href="#install"
+             class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-paper px-6 py-3 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-paper-dim sm:w-auto cursor-pointer">
+            Get started
+          </a>
+          <a href="https://github.com/asynx6/nexus-cli" target="_blank" rel="noopener"
+             class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-line bg-ink-900 px-6 py-3 text-sm font-medium text-paper transition-colors duration-200 hover:border-fog hover:bg-ink-850 sm:w-auto cursor-pointer">
+            Read the source
+          </a>
+        </div>
+        <p class="mt-6 font-mono text-xs text-fog-dim">npm install -g @asynx6/nexus-cli</p>
+      </div>
+
+      <!-- Terminal -->
+      <div class="mx-auto mt-16 max-w-3xl">
+        <div class="overflow-hidden rounded-lg border border-line bg-ink-900 shadow-2xl shadow-black/50">
+          <div class="flex items-center gap-1.5 border-b border-line-soft bg-ink-850 px-4 py-3">
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-600" aria-hidden="true"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-600" aria-hidden="true"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-600" aria-hidden="true"></span>
+            <span class="ml-3 font-mono text-xs text-fog-dim">terminal</span>
+          </div>
+          <div class="overflow-x-auto p-5 font-mono text-xs leading-relaxed md:text-sm">
+            <p class="text-fog">$ nexus run "audit the auth module and fix the token expiry bug"</p>
+            <p class="mt-2 text-fog-dim">[sandbox ] container started · network denied · 512MB cap</p>
+            <p class="text-fog-dim">[permission] fs.read  src/auth/*        <span class="text-paper">granted</span></p>
+            <p class="text-fog-dim">[permission] fs.write src/auth/token.js <span class="text-paper">granted</span></p>
+            <p class="text-fog-dim">[permission] terminal curl api.example.com <span class="text-paper dim">denied</span></p>
+            <p class="mt-2 text-fog-dim">[event 041] tool.call  fs.read    src/auth/token.js</p>
+            <p class="text-fog-dim">[event 042] tool.call  fs.edit    token.js  (&lt; → &lt;=, expiry check)</p>
+            <p class="text-fog-dim">[event 043] tool.call  terminal   node --test  <span class="text-paper">7/7 pass</span></p>
+            <p class="mt-2 text-fog">Done. 3 events written. Replay with <span class="text-paper">nexus replay</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="border-t border-line-soft bg-ink-900/40">
+    <div class="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <div class="max-w-2xl">
+        <h2 class="text-2xl font-semibold tracking-tight text-paper md:text-3xl">Built around the audit trail</h2>
+        <p class="mt-3 text-fog">Most agent stacks wrap a chat loop. NEXUS logs every tool call, decision, and result as an event — so replay, diff, and audit come for free.</p>
+      </div>
+      <div class="mt-12 grid gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-2 lg:grid-cols-3">
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Isolated sandbox</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Filesystem and terminal access inside a Docker container. Network denied by default, resource limits enforced.</p>
+        </div>
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Gated tools</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Every tool call routes through a permission manager. Grants are explicit, scoped, and logged.</p>
+        </div>
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Append-only event log</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Every action gets a sequence number, timestamp, and structured data. Replayable from any point.</p>
+        </div>
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Replay and diff</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Reproduce a failure step by step, or diff two runs event-by-event to see exactly where they diverged.</p>
+        </div>
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Any model, any endpoint</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Works with any OpenAI-compatible endpoint. Model fallback and multi-model consensus built in.</p>
+        </div>
+        <div class="bg-ink-900 p-6 transition-colors duration-200 hover:bg-ink-850">
+          <h3 class="font-mono text-sm font-semibold text-paper">Multi-agent cluster</h3>
+          <p class="mt-2.5 text-sm leading-relaxed text-fog">Leader election, shared work queue, and task recovery when a node drops mid-run.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENT LOG / WHY -->
+  <section id="events" class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <div class="grid items-center gap-12 lg:grid-cols-2">
+        <div>
+          <h2 class="text-2xl font-semibold tracking-tight text-paper md:text-3xl">When an agent goes wrong,<br>you can prove what happened</h2>
+          <p class="mt-4 leading-relaxed text-fog">An agent that edits files and runs commands without a trail is a liability. NEXUS writes every action to an append-only log first, then executes. The log is the source of truth — not the chat window.</p>
+          <ul class="mt-8 space-y-4">
+            <li class="flex gap-3">
+              <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-paper" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-fog"><span class="font-medium text-paper">Replay any run</span> — reproduce or diagnose a failure from any point.</p>
+            </li>
+            <li class="flex gap-3">
+              <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-paper" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-fog"><span class="font-medium text-paper">Diff two runs</span> — see event-by-event where behavior diverged.</p>
+            </li>
+            <li class="flex gap-3">
+              <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-paper" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+              <p class="text-sm text-fog"><span class="font-medium text-paper">Audit access</span> — which agent touched which file, under which grant.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="overflow-hidden rounded-lg border border-line bg-ink-900">
+          <div class="border-b border-line-soft px-5 py-3">
+            <p class="font-mono text-xs text-fog-dim">event log — append only</p>
+          </div>
+          <div class="divide-y divide-line-soft font-mono text-xs">
+            <div class="flex items-baseline gap-4 px-5 py-3.5">
+              <span class="text-fog-dim">041</span><span class="w-20 flex-shrink-0 text-paper-dim">tool.call</span><span class="text-fog">fs.read src/auth/token.js</span>
+            </div>
+            <div class="flex items-baseline gap-4 px-5 py-3.5">
+              <span class="text-fog-dim">042</span><span class="w-20 flex-shrink-0 text-paper-dim">permission</span><span class="text-fog">grant fs.write → agent "fixer"</span>
+            </div>
+            <div class="flex items-baseline gap-4 px-5 py-3.5">
+              <span class="text-fog-dim">043</span><span class="w-20 flex-shrink-0 text-paper-dim">tool.call</span><span class="text-fog">fs.edit token.js +2 −2</span>
+            </div>
+            <div class="flex items-baseline gap-4 px-5 py-3.5">
+              <span class="text-fog-dim">044</span><span class="w-20 flex-shrink-0 text-paper-dim">tool.call</span><span class="text-fog">terminal node --test</span>
+            </div>
+            <div class="flex items-baseline gap-4 bg-ink-850 px-5 py-3.5">
+              <span class="text-fog-dim">045</span><span class="w-20 flex-shrink-0 text-paper-dim">run.end</span><span class="text-paper">exit 0 · 7 tests passed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="border-t border-line-soft bg-ink-900/40">
+    <div class="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-2xl font-semibold tracking-tight text-paper md:text-3xl">Run it in two minutes</h2>
+        <p class="mt-3 text-fog">Node 22 or newer. Docker only if you want sandbox isolation — the CLI runs without it.</p>
+      </div>
+      <div class="mx-auto mt-10 max-w-2xl overflow-hidden rounded-lg border border-line bg-ink-900">
+        <div class="overflow-x-auto p-5 font-mono text-xs md:text-sm">
+          <p class="text-fog">$ npm install -g @asynx6/nexus-cli</p>
+          <p class="mt-1 text-fog-dim">added 1 package in 4s</p>
+          <p class="mt-3 text-fog">$ nexus --version</p>
+          <p class="mt-1 text-paper">0.4.2</p>
+          <p class="mt-3 text-fog">$ nexus init my-agent && cd my-agent</p>
+        </div>
+      </div>
+      <p class="mt-6 text-center font-mono text-xs text-fog-dim">Requires an OpenAI-compatible chat-completions endpoint as the model backend.</p>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-6 py-20 text-center md:py-24">
+      <h2 class="text-2xl font-semibold tracking-tight text-paper md:text-3xl">Stop guessing what your agent did</h2>
+      <p class="mx-auto mt-3 max-w-xl text-fog">Open source, MIT licensed, zero runtime dependencies. Star it, fork it, or run it.</p>
+      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a href="https://github.com/asynx6/nexus-cli" target="_blank" rel="noopener"
+           class="inline-flex w-full items-center justify-center rounded-md bg-paper px-6 py-3 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-paper-dim sm:w-auto cursor-pointer">
+          View on GitHub
+        </a>
+        <a href="#install"
+           class="inline-flex w-full items-center justify-center rounded-md border border-line bg-ink-900 px-6 py-3 text-sm font-medium text-paper transition-colors duration-200 hover:border-fog sm:w-auto cursor-pointer">
+          Install
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-line-soft">
+  <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
+    <p class="font-mono text-xs text-fog-dim">NEXUS — open-source AI Agent Operating Environment</p>
+    <p class="font-mono text-xs text-fog-dim">MIT © 2026 · <a href="https://github.com/asynx6/nexus-cli" class="transition-colors hover:text-fog">github.com/asynx6/nexus-cli</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
